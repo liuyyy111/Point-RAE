@@ -135,11 +135,11 @@ If you have any questions related to the code or the paper, feel free to email R
 
 If you find our work useful in your research, please consider citing:
 ```latex
-@inproceedings{dong2023act,
-  title={Autoencoders as Cross-Modal Teachers: Can Pretrained 2D Image Transformers Help 3D Representation Learning?},
-  author={Runpei Dong and Zekun Qi and Linfeng Zhang and Junbo Zhang and Jianjian Sun and Zheng Ge and Li Yi and Kaisheng Ma},
-  booktitle={The Eleventh International Conference on Learning Representations (ICLR) },
+@inproceedings{liu2023regress,
+  title={Regress Before Construct: Regress Autoencoder for Point Cloud Self-supervised Learning},
+  author={Yang Liu and Chen Chen and Can Wang and Xulin King and Mengyuan Liu},
+  booktitle={Proceedings of the 31th ACM international conference on multimedia (ACM MM)},
   year={2023},
-  url={https://openreview.net/forum?id=8Oun8ZUVe8N}
+  url={https://openreview.net/forum?id=ePXxwgvwJ9}
 }
 ```
