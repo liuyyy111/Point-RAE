@@ -1,3 +1,3 @@
 from .build import build_model_from_cfg
 import models.dvae
-import models.act
+import models.point_rae
