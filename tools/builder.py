@@ -100,7 +100,10 @@ def build_opti_sche(base_model, config):
         print("Param groups = %s" % json.dumps(parameter_group_names, indent=2))
         return list(parameter_group_vars.values())
     # config.optimizer.kwargs.layer_decay = 0.85
-    assigner = LayerDecayValueAssigner(list(0.65 ** (config.model.depth + 1 - i) for i in range(config.model.depth + 2)))
+#     print(config.model)
+    depth = config.model.depth if not hasattr(config.model, 'transformer_config') else config.model.transformer_config.depth
+    
+    assigner = LayerDecayValueAssigner(list(0.65 ** (depth + 1 - i) for i in range(depth + 2)))
     opti_config = config.optimizer
     if opti_config.type == 'AdamW':
         param_groups = add_weight_decay(base_model, weight_decay=opti_config.kwargs.weight_decay, get_num_layer=assigner.get_layer_id, get_layer_scale=assigner.get_scale)
