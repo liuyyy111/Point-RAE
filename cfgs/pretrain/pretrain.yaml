@@ -30,10 +30,11 @@ dataset:
 
 
 model:
-  NAME: Point-RAE
+  NAME: Point_RAE
   loss: cosine
   reg_depth: 4
   reg_num_head: 6
+  reg_num_heads: 6
 
   transformer_config:
     mask_ratio: 0.8
