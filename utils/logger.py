@@ -129,19 +129,19 @@ def print_log(msg, logger=None, level=logging.INFO):
             'logger should be either a logging.Logger object, str, '
             f'"silent" or None, but got {type(logger)}')
 
-# def basic_log(args, config, logger):
-#     # init the meta dict to record some important information such as
-#     # environment info and seed, which will be logged
-#     meta = dict()
-#     # log env info
-#     env_info_dict = collect_env()
-#     env_info = '\n'.join([(f'{k}: {v}') for k, v in env_info_dict.items()])
-#     dash_line = '-' * 60 + '\n'
-#     logger.info('Environment info:\n' + dash_line + env_info + '\n' +
-#                 dash_line)
-#     meta['env_info'] = env_info
-#     meta['config'] = config
-#     # log some basic info
-#     print_log(f'Distributed training: {args.distributed}\n', logger)
-#     print_log('training args:\n{}\n'.format(args), logger)
-#     print_log('training config:\n{}\n'.format(pprint.pformat(config)), logger)
+def basic_log(args, config, logger):
+    # init the meta dict to record some important information such as
+    # environment info and seed, which will be logged
+    meta = dict()
+    # log env info
+    env_info_dict = collect_env()
+    env_info = '\n'.join([(f'{k}: {v}') for k, v in env_info_dict.items()])
+    dash_line = '-' * 60 + '\n'
+    logger.info('Environment info:\n' + dash_line + env_info + '\n' +
+                dash_line)
+    meta['env_info'] = env_info
+    meta['config'] = config
+    # log some basic info
+    print_log(f'Distributed training: {args.distributed}\n', logger)
+    print_log('training args:\n{}\n'.format(args), logger)
+    print_log('training config:\n{}\n'.format(pprint.pformat(config)), logger)
