@@ -884,11 +884,11 @@ class Point_RAE(nn.Module):
 
     def build_tokenizer(self, cfg):
         self.dvae_tokenizer = ACTPromptedDiscreteVAEwithVIT(cfg)
-        dvae_ckpt = self.config.dvae_config.ckpt
-        ckpt = torch.load(dvae_ckpt, map_location='cpu')
-        base_ckpt = {k.replace("module.", ""): v for k, v in ckpt['base_model'].items()}
-        self.dvae_tokenizer.load_state_dict(base_ckpt, strict=True)
-        print_log(f'[Point-RAE] Successful Loading the ckpt for dvae from {dvae_ckpt}', logger='Point-RAE')
+#         dvae_ckpt = self.config.dvae_config.ckpt
+#         ckpt = torch.load(dvae_ckpt, map_location='cpu')
+#         base_ckpt = {k.replace("module.", ""): v for k, v in ckpt['base_model'].items()}
+#         self.dvae_tokenizer.load_state_dict(base_ckpt, strict=True)
+#         print_log(f'[Point-RAE] Successful Loading the ckpt for dvae from {dvae_ckpt}', logger='Point-RAE')
 
         for param in self.dvae_tokenizer.parameters():
             param.requires_grad = False
