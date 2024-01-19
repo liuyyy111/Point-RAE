@@ -1,9 +1,4 @@
-# --------------------------------------------------------
-# ACT 3D dVAE with Pretrained Transformer Model Script
-# Autoencoders as Cross-Modal Teachers
-# Copyright (c) 2022 Runpei Dong
-# Licensed under The MIT License [see LICENSE for details]
-# --------------------------------------------------------
+
 
 import sys
 import torch.nn as nn
@@ -16,19 +11,49 @@ from timm.models.layers import trunc_normal_
 # from pointnet2_ops import pointnet2_utils
 from .build import MODELS
 from utils import misc
-from extensions.chamfer_dist import ChamferDistanceL1, ChamferDistanceL2
 from utils.logger import *
 
-# from knn_cuda import KNN
-# knn = KNN(k=4, transpose_mode=False)
+from knn_cuda import KNN
+knn = KNN(k=4, transpose_mode=False)
 
-def knn(x, k):
-    inner = -2 * torch.matmul(x.transpose(2, 1), x)
-    xx = torch.sum(x ** 2, dim=1, keepdim=True)
-    pairwise_distance = -xx - inner - xx.transpose(2, 1)
+def chamfer(pc1, pc2):
+    """
+    CD distance of single point cloud
+    arguments: 
+        pc1: the array, size: (bs, num_point, num_feature). 
+        pc2: the samples, size: (bs, num_point, num_feature). 
+    returns:
+        distances: each entry is the distance from a sample to pc1 
+    """
+    bs, num_point1, num_features1 = pc1.shape
+    _, num_point2, num_features2 = pc2.shape
+ 
+    expanded_pc1 = pc1.repeat(1,num_point2, 1)  # (512*512,1)
+    # (512,3) -> (512,1,3) -> (512,512,3) -> (512*512,3)
+    expanded_pc2 = torch.reshape(torch.unsqueeze(pc2, 2).repeat(1, 1, num_point1, 1), (bs, -1, num_features2))
+    # expanded_pc1: (512,1), expanded_pc2: (512*512,3)
 
-    idx = pairwise_distance.topk(k=k, dim=-1)[1]  # (batch_size, num_points, k)
-    return idx
+    distances = (expanded_pc1 - expanded_pc2) * (expanded_pc1 - expanded_pc2)
+    #    distances = torch.sqrt(distances)
+    distances = torch.sum(distances, dim=2)  # s1中的点和s2中的点两两之间的平方距离
+    distances = torch.reshape(distances, (bs, num_point2, num_point1))  #
+ 
+    distances = torch.min(distances, dim=1)[0]
+    distances = torch.mean(distances)
+    return distances
+
+def chamfer_distance_l2(pc1, pc2):
+    dist1 = chamfer(pc1, pc2)
+    dist2 = chamfer(pc2, pc1)
+    
+    return torch.mean(dist1) + torch.mean(dist2)
+
+def chamfer_distance_l1(pc1, pc2):
+    dist1 = chamfer(pc1, pc2)
+    dist2 = chamfer(pc2, pc1)
+    
+    
+    return (torch.mean(torch.sqrt(dist1)) + torch.mean(torch.sqrt(dist2)))/2
 
 
 def get_graph_feature(x, k=20, idx=None):
@@ -191,7 +216,7 @@ class Group(nn.Module):
         super().__init__()
         self.num_group = num_group
         self.group_size = group_size
-        # self.knn = KNN(k=self.group_size, transpose_mode=True)
+        self.knn = KNN(k=self.group_size, transpose_mode=True)
 
     def forward(self, xyz):
         '''
@@ -204,7 +229,7 @@ class Group(nn.Module):
         # fps the centers out
         center = misc.fps(xyz, self.num_group) # B G 3
         # knn to get the neighborhood
-        _, idx = knn(xyz, center) # B G M
+        _, idx = self.knn(xyz, center) # B G M
         # idx = knn_point(self.group_size, xyz, center) # B G M
         assert idx.size(1) == self.num_group
         assert idx.size(2) == self.group_size
@@ -332,8 +357,8 @@ class DiscreteVAE(nn.Module):
         self.build_loss_func()
         
     def build_loss_func(self):
-        self.loss_func_cdl1 = ChamferDistanceL1().cuda()
-        self.loss_func_cdl2 = ChamferDistanceL2().cuda()
+        self.loss_func_cdl1 = chamfer_distance_l1
+        self.loss_func_cdl2 = chamfer_distance_l2
         # self.loss_func_emd = emd().cuda()
 
     def recon_loss(self, ret, gt):
@@ -437,7 +462,7 @@ class ACTPromptedDiscreteVAEwithVIT(nn.Module):
                 )
                 self.visual_embed_depth = image_model.visual.transformer.layers
             else:
-                image_model = timm.create_model(self.visual_embed_type, pretrained=True)
+                image_model = timm.create_model(self.visual_embed_type, pretrained=False)
                 self.visual_embed = nn.Sequential(
                     image_model.blocks,
                     image_model.norm
@@ -479,8 +504,8 @@ class ACTPromptedDiscreteVAEwithVIT(nn.Module):
                     param.requires_grad = False # not update by gradient
 
     def build_loss_func(self):
-        self.loss_func_cdl1 = ChamferDistanceL1().cuda()
-        self.loss_func_cdl2 = ChamferDistanceL2().cuda()
+        self.loss_func_cdl1 = chamfer_distance_l1
+        self.loss_func_cdl2 = chamfer_distance_l2
 
     def recon_loss(self, ret, gt):
         whole_coarse, whole_fine, coarse, fine, group_gt, _ = ret
@@ -738,8 +763,8 @@ class ACTPromptedDiscreteVAEwithBERT(nn.Module):
                     param.requires_grad = False # not update by gradient
 
     def build_loss_func(self):
-        self.loss_func_cdl1 = ChamferDistanceL1().cuda()
-        self.loss_func_cdl2 = ChamferDistanceL2().cuda()
+        self.loss_func_cdl1 = chamfer_distance_l1
+        self.loss_func_cdl2 = chamfer_distance_l2
         # self.loss_func_emd = emd().cuda()
 
     def recon_loss(self, ret):
