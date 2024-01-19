@@ -1,14 +1,9 @@
-# -*- coding: utf-8 -*-
-# @Author: Haozhe Xie
-# @Date:   2019-08-08 14:31:30
-# @Last Modified by:   Haozhe Xie
-# @Last Modified time: 2020-05-25 09:13:32
-# @Email:  cshzxie@gmail.com
 
 import logging
 import open3d
 
-from extensions.chamfer_dist import ChamferDistanceL1, ChamferDistanceL2
+# from extensions.chamfer_dist import ChamferDistanceL1, ChamferDistanceL2
+from models.dvae import chamfer_distance_l2 as ChamferDistanceL1, chamfer_distance_l1 as ChamferDistanceL2
 
 
 class Metrics(object):
@@ -22,14 +17,14 @@ class Metrics(object):
         'name': 'CDL1',
         'enabled': True,
         'eval_func': 'cls._get_chamfer_distancel1',
-        'eval_object': ChamferDistanceL1(ignore_zeros=True),
+        'eval_object': ChamferDistanceL1,
         'is_greater_better': False,
         'init_value': 32767
     }, {
         'name': 'CDL2',
         'enabled': True,
         'eval_func': 'cls._get_chamfer_distancel2',
-        'eval_object': ChamferDistanceL2(ignore_zeros=True),
+        'eval_object': ChamferDistanceL2,
         'is_greater_better': False,
         'init_value': 32767
     }]
