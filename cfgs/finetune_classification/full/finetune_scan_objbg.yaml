@@ -39,7 +39,7 @@ model:
   encoder_dims: 384
   transfer_type: full
   reg_depth: 4
-  reg_num_head: 6
+  reg_num_heads: 6
 
 npoints: 2048
 total_bs: 32
