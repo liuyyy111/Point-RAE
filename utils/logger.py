@@ -2,7 +2,7 @@ import logging
 import pprint
 import torch.distributed as dist
 
-# from .collect_env import collect_env
+from .collect_env import collect_env
 
 logger_initialized = {}
 
