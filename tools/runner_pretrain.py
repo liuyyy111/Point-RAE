@@ -109,7 +109,7 @@ def run_net(args, config, train_writer=None, val_writer=None):
         batch_start_time = time.time()
         batch_time = AverageMeter()
         data_time = AverageMeter()
-        losses = AverageMeter(['Loss'])
+        losses = AverageMeter(['Loss', 'main_loss', 'align_loss'])
         # if 'BERT' in config.model.NAME:
         #     losses = AverageMeter(['Loss', 'L_moco', 'L_dvae', 'L_mixup'])
         # else:
@@ -138,10 +138,10 @@ def run_net(args, config, train_writer=None, val_writer=None):
             points = train_transforms(points)
             loss = base_model(points)
             if isinstance(loss, tuple):
-                loss_1, loss_2, loss_3 = loss[0], loss[1], loss[2]
-                loss = loss_1 + loss_2 + loss_3
+                loss_1, loss_2  = loss[0], loss[1] 
+                loss = loss_1 + loss_2 
             else:
-                loss_1, loss_2, loss_3 = None, None, None
+                loss_1, loss_2  = None, None 
             try:
                 loss.backward()
                 # print("Using one GPU")
@@ -160,14 +160,14 @@ def run_net(args, config, train_writer=None, val_writer=None):
                 if loss_1 is not None:
                     loss_1 = dist_utils.reduce_tensor(loss_1, args)
                     loss_2 = dist_utils.reduce_tensor(loss_2, args)
-                    loss_3 = dist_utils.reduce_tensor(loss_3, args)
-                    losses.update([loss.item(), loss_1.item(), loss_2.item(), loss_3.item()])
+#                     loss_3 = dist_utils.reduce_tensor(loss_3, args)
+                    losses.update([loss.item(), loss_1.item(), loss_2.item()])
                 else:
                     loss = dist_utils.reduce_tensor(loss, args)
                     losses.update([loss.item()])
             else:
                 if loss_1 is not None:
-                    losses.update([loss.item(), loss_1.item(), loss_2.item(), loss_3.item()])
+                    losses.update([loss.item(), loss_1.item(), loss_2.item()])
                 else:
                     losses.update([loss.item()])
 
@@ -182,7 +182,6 @@ def run_net(args, config, train_writer=None, val_writer=None):
                 if loss_1 is not None:
                     train_writer.add_scalar('Loss/Batch/Loss_moco', loss_1.item(), n_itr)
                     train_writer.add_scalar('Loss/Batch/Loss_dvae', loss_2.item(), n_itr)
-                    train_writer.add_scalar('Loss/Batch/Loss_cutmix', loss_3.item(), n_itr)
 
 
             batch_time.update(time.time() - batch_start_time)
@@ -193,6 +192,9 @@ def run_net(args, config, train_writer=None, val_writer=None):
                 print_log('[Epoch %d/%d][Batch %d/%d] BatchTime = %.3f (s) DataTime = %.3f (s) [Losses] = %s lr = %.6f' %
                             (epoch, config.max_epoch, idx + 1, n_batches, batch_time.val(), data_time.val(),
                             ['%.4f' % l for l in losses.val()], optimizer.param_groups[0]['lr']), logger=logger)
+                
+#                 builder.save_checkpoint(base_model, optimizer, epoch, metrics, best_metrics, 'ckpt-last', args, logger=logger)
+
         if isinstance(scheduler, list):
             for item in scheduler:
                 item.step(epoch)
